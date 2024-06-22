@@ -1,12 +1,12 @@
 import pandas as pd
 
-file = '/u/irist_guest/Desktop/pdfs/yup.csv'
+file = '/u/irist_guest/Desktop/pdfs/yu.csv'
 
 # Read the CSV file
-df = pd.read_csv(file, encoding='Latin-1',engine='python')
+df = pd.read_csv(file,encoding = 'utf-8')
 
 # Define keywords
-keywords = ['Instructor', 'Email', 'Office Hours', 'Late Work', 'Peer Mentor', 'Course Description', 'Learning Objective']
+keywords = ['Instructor', 'Email', 'Office', 'Late', 'Mentor', 'Description', 'Objective']
 
 # Initialize columns for each keyword
 for keyword in keywords:
@@ -23,9 +23,10 @@ for index, row in df.iterrows():
             
             # Assign the captured text to the corresponding column
             df.at[index, keyword] = text_after_keyword
+            break
 
 # Output the updated dataframe to a new CSV file
-output_file_path = '/u/irist_guest/newfile.csv'
+output_file_path = '/u/irist_guest/results.csv'
 df.to_csv(output_file_path, index=False, encoding='utf-8-sig')  # utf-8-sig for handling special characters properly
 
 # Print the first few rows of the updated dataframe (optional)
