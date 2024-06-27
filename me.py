@@ -10,6 +10,58 @@ from sklearn.preprocessing import LabelEncoder
 from transformers import AutoModel, BertTokenizerFast
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 import torch.optim.lr_scheduler as lr_scheduler
+data = {"intents": [
+    {"tag": "Instructor", 
+    "responses": ["Would you like to know more about the insturctor?", "Let me do that!", "Who is my instructor?" ]
+    }    
+    {"tag": "Email",
+    "responses": ["What is the email of the my teacher?", "Email?","Contact Information"]
+    }
+    {"tag": "Office",
+    "responses": ["What are the office hours?", "Office location?","Office hours?"]
+    }
+    {"tag": "Late Work",
+    "responses": ["What is the policy on late work?", "Late work?","I have late work"]
+    }
+    {"tag": "Course Description",
+    "responses": ["Course Description?", "What does the course cover?","Describe the course?"]
+    }
+    {"tag": "Objective",
+    "responses": ["Whats suppose to come out of the course?", "What does the course teach me?","How can I use this in the real world?"]
+    }
+    {"tag": "Materials",
+    "responses": ["What do I need for this class?", "What textbook do I need to buy?","Is my computer enough?"]
+    }
+    {"tag": "Grade",
+    "responses": ["What will my grade look like?", "WHat grade is an A?","What is the grading scale?"]
+    }
+    {"tag": "Week",
+    "responses": ["What does the first week look like?", "Is there a week by week schedule?","Weekly schedule?"]
+    }
+    {"tag": "Location",
+    "responses": ["Location of classroom?", "Location?","What building is the classroom in?"]
+    }
+    {"tag": "Grading",
+    "responses": ["What is the grading system like?", "How is the final weighted?","Grading scale?"]
+    }
+    {"tag": "Calendar",
+    "responses": ["What does the calendar look like?", "Class calendar?","Calendar?"]
+    }
+    {"tag": "Expectations",
+    "responses": ["Expectations?", "What should the teacher expect?","How should I act?"]
+    }
+    {"tag": "Resources",
+    "responses": ["Where can I report an incident?", "Who can I talk to?","I need help?"]
+    }
+    {"tag": "Attendance",
+    "responses": ["Attendance policy?", "Do I have to go to class everyday?","Attendance?"]
+    }
+    {"tag": "Academic Integrity",
+    "responses": ["Cheating policy?", "PSU policy?","Plagiarism?"]
+    }{"tag": "Technology",
+    "responses": ["Phone policy?", "Is my computer good?","Technology views?"]}
+    ]}
+
 # specify GPU
 device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
 #Training
@@ -58,7 +110,7 @@ class BERT_Arch(nn.Module):
        # dense layer
        self.fc1 = nn.Linear(768,512)
        self.fc2 = nn.Linear(512,256)
-       self.fc3 = nn.Linear(256,5)
+       self.fc3 = nn.Linear(256,17)
        #softmax activation function
        self.softmax = nn.LogSoftmax(dim=1)
        #define the forward pass
@@ -101,6 +153,7 @@ class_weights = compute_class_weight(
                                         y = train_labels                                                    
                                     )
 # class_weights = dict(zip(np.unique(train_labels), class_weights))
+print("class weight:")
 print(class_weights)
 
 # convert class weights to tensor
@@ -112,7 +165,7 @@ cross_entropy = nn.NLLLoss(weight=weights)
 # empty lists to store training and validation loss of each epoch
 train_losses=[]
 # number of training epochs
-epochs = 200
+epochs = 25
 # We can also use learning rate scheduler to achieve better results
 lr_sch = lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.1)
 
@@ -177,3 +230,34 @@ for epoch in range(epochs):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 print(f'\nTraining Loss: {train_loss:.3f}')
+
+def get_prediction(str):
+ str = re.sub(r'[^a-zA-Z ]+', '', str)
+ test_text = [str]
+ model.eval()
+ 
+ tokens_test_data = tokenizer(
+ test_text,
+ max_length = max_seq_len,
+ pad_to_max_length=True,
+ truncation=True,
+ return_token_type_ids=False
+ )
+ test_seq = torch.tensor(tokens_test_data['input_ids'])
+ test_mask = torch.tensor(tokens_test_data['attention_mask'])
+ 
+ preds = None
+ with torch.no_grad():
+   preds = model(test_seq.to(device), test_mask.to(device))
+ preds = preds.detach().cpu().numpy()
+ preds = np.argmax(preds, axis = 1)
+ print("Intent Identified: ", le.inverse_transform(preds)[0])
+ return le.inverse_transform(preds)[0]
+def get_response(message): 
+  intent = get_prediction(message)
+  for i in data['intents']: 
+    if i["tag"] == intent:
+      result = random.choice(i["responses"])
+      break
+  print(f"Response : {result}")
+  return "Intent: "+ intent + '\n' + "Response: " + result
