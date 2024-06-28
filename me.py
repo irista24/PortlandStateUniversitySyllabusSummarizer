@@ -10,57 +10,44 @@ from sklearn.preprocessing import LabelEncoder
 from transformers import AutoModel, BertTokenizerFast
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 import torch.optim.lr_scheduler as lr_scheduler
-data = {"intents": [
-    {"tag": "Instructor", 
-    "responses": ["Would you like to know more about the insturctor?", "Let me do that!", "Who is my instructor?" ]
-    }    
-    {"tag": "Email",
-    "responses": ["What is the email of the my teacher?", "Email?","Contact Information"]
-    }
-    {"tag": "Office",
-    "responses": ["What are the office hours?", "Office location?","Office hours?"]
-    }
-    {"tag": "Late Work",
-    "responses": ["What is the policy on late work?", "Late work?","I have late work"]
-    }
-    {"tag": "Course Description",
-    "responses": ["Course Description?", "What does the course cover?","Describe the course?"]
-    }
-    {"tag": "Objective",
-    "responses": ["Whats suppose to come out of the course?", "What does the course teach me?","How can I use this in the real world?"]
-    }
-    {"tag": "Materials",
-    "responses": ["What do I need for this class?", "What textbook do I need to buy?","Is my computer enough?"]
-    }
-    {"tag": "Grade",
-    "responses": ["What will my grade look like?", "WHat grade is an A?","What is the grading scale?"]
-    }
-    {"tag": "Week",
-    "responses": ["What does the first week look like?", "Is there a week by week schedule?","Weekly schedule?"]
-    }
-    {"tag": "Location",
-    "responses": ["Location of classroom?", "Location?","What building is the classroom in?"]
-    }
-    {"tag": "Grading",
-    "responses": ["What is the grading system like?", "How is the final weighted?","Grading scale?"]
-    }
-    {"tag": "Calendar",
-    "responses": ["What does the calendar look like?", "Class calendar?","Calendar?"]
-    }
-    {"tag": "Expectations",
-    "responses": ["Expectations?", "What should the teacher expect?","How should I act?"]
-    }
-    {"tag": "Resources",
-    "responses": ["Where can I report an incident?", "Who can I talk to?","I need help?"]
-    }
-    {"tag": "Attendance",
-    "responses": ["Attendance policy?", "Do I have to go to class everyday?","Attendance?"]
-    }
-    {"tag": "Academic Integrity",
-    "responses": ["Cheating policy?", "PSU policy?","Plagiarism?"]
-    }{"tag": "Technology",
-    "responses": ["Phone policy?", "Is my computer good?","Technology views?"]}
-    ]}
+import json
+
+file_path = "/u/irist_guest/Desktop/pdfs/intents.json"
+
+try:
+    with open(file_path, 'r', encoding='utf-8') as file:
+        content = file.read()
+        print("File content:")
+        print(content)  # Print the raw file content to check for issues
+        
+        data = json.loads(content)  # Use json.loads to handle the string content
+        print("Parsed data:")
+        print(data)
+        print("Intents:")
+        print(data['intents'])
+except json.JSONDecodeError as e:
+    print(f"Error decoding JSON: {e}")
+except FileNotFoundError as e:
+    print(f"File not found: {e}")
+except Exception as e:
+    print(f"An error occurred: {e}")
+
+try:
+    with open("/u/irist_guest/Desktop/pdfs/intents.json", 'r') as f:
+        content = f.read()
+        print("File content:")
+        print(content)
+        data = json.loads(content)
+    print(data['intents'])
+except json.JSONDecodeError as e:
+    print(f"Error decoding JSON: {e}")
+except FileNotFoundError as e:
+    print(f"File not found: {e}")
+except Exception as e:
+    print(f"An error occurred: {e}")
+
+
+ 
 
 # specify GPU
 device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
