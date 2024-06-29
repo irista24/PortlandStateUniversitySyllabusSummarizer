@@ -12,43 +12,7 @@ from torch.utils.data import TensorDataset, DataLoader, RandomSampler, Sequentia
 import torch.optim.lr_scheduler as lr_scheduler
 import json
 
-file_path = "/u/irist_guest/Desktop/pdfs/intents.json"
-
-try:
-    with open(file_path, 'r', encoding='utf-8') as file:
-        content = file.read()
-        print("File content:")
-        print(content)  # Print the raw file content to check for issues
-        
-        data = json.loads(content)  # Use json.loads to handle the string content
-        print("Parsed data:")
-        print(data)
-        print("Intents:")
-        print(data['intents'])
-except json.JSONDecodeError as e:
-    print(f"Error decoding JSON: {e}")
-except FileNotFoundError as e:
-    print(f"File not found: {e}")
-except Exception as e:
-    print(f"An error occurred: {e}")
-
-try:
-    with open("/u/irist_guest/Desktop/pdfs/intents.json", 'r') as f:
-        content = f.read()
-        print("File content:")
-        print(content)
-        data = json.loads(content)
-    print(data['intents'])
-except json.JSONDecodeError as e:
-    print(f"Error decoding JSON: {e}")
-except FileNotFoundError as e:
-    print(f"File not found: {e}")
-except Exception as e:
-    print(f"An error occurred: {e}")
-
-
- 
-
+data = json.load(open("/u/irist_guest/Desktop/pdfs/x.json", "r"))
 # specify GPU
 device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
 #Training
