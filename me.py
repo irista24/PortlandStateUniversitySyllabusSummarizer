@@ -11,6 +11,21 @@ from transformers import AutoModel, BertTokenizerFast
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 import torch.optim.lr_scheduler as lr_scheduler
 import json
+import gradio
+import matplotlib
+matplotlib.use('agg')  # Use a non-interactive backend
+import matplotlib.pyplot as plt
+
+def plot_function():
+    plt.ioff()  # Turn off interactive mode
+    fig, ax = plt.subplots()
+    ax.plot([0, 1, 2], [0, 1, 4])
+    plt.savefig('plot.png')  # Save the plot instead of displaying it
+    plt.close(fig)  # Close the figure
+
+# Call your function
+plot_function()
+
 
 data = json.load(open("/u/irist_guest/Desktop/pdfs/x.json", "r"))
 # specify GPU
@@ -212,3 +227,12 @@ def get_response(message):
       break
   print(f"Response : {result}")
   return "Intent: "+ intent + '\n' + "Response: " + result
+
+import gradio as gr
+
+def chat(message):
+    response = get_response(message)
+    return response
+
+iface = gr.Interface(fn=chat, inputs="text", outputs="text", title="Chatbot")
+iface.launch()
