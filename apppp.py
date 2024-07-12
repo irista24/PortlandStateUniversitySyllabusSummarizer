@@ -96,7 +96,7 @@ model = Label()
 model.to(device)
 
 EPOCHS = 100
-LEARNING_RATE = 2e-5
+LEARNING_RATE = 1.9e-5
 optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
 loss_function = torch.nn.CrossEntropyLoss()
 
@@ -153,14 +153,15 @@ for epoch in range(EPOCHS):
 
     avg_val_loss = total_val_loss / len(val_loader)
     val_losses.append(avg_val_loss)
-    val_accuracy = total_correct / total_samples
+    accuracy = total_correct / total_samples
 
-    print(f"Epoch: {epoch + 1}, Validation Loss: {avg_val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}")
+    print(f"Epoch: {epoch + 1}, Validation Loss: {avg_val_loss:.4f}, Validation Accuracy: {accuracy:.4f}")
 
     # Check for early stopping
     if avg_val_loss < best_val_loss:
         best_val_loss = avg_val_loss
         patience_counter = 0
+        torch.save(model.state_dict(), '/u/irist_guest/Desktop/pdfs/model.pth')
     else:
         patience_counter += 1
 
@@ -200,9 +201,9 @@ for batch in test_bar:
         test_bar.set_postfix(loss=loss.item())
 
 avg_test_loss = total_test_loss / len(test_loader)
-test_accuracy = total_correct / total_samples
+accuracy = total_correct / total_samples
 
-print(f"Test Loss: {avg_test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
+print(f"Test Loss: {avg_test_loss:.4f}, Test Accuracy: {accuracy:.4f}")
 
 # Load the losses from CSV
 loss_df = pd.read_csv('model_losses.csv')
@@ -218,14 +219,6 @@ plt.ylabel('Loss')
 plt.legend()
 plt.title('Training and Validation Loss Curves')
 plt.savefig('/u/irist_guest/Desktop/pdfs/loss_curves.png')
-
-plt.figure(figsize=(10, 5))
-plt.plot(loss_df['epoch'], val_accuracy, label='Validation Accuracy')
-plt.xlabel('Epochs')
-plt.ylabel('Accuracy')
-plt.legend()
-plt.title('Validation Accuracy Curve')
-plt.savefig('/u/irist_guest/Desktop/pdfs/accuracy_curve.png')
 # Create TF-IDF Vectorizer
 tfidf_vectorizer = TfidfVectorizer()
 tfidf_matrix = tfidf_vectorizer.fit_transform(df["Text"])
@@ -244,7 +237,6 @@ def gradio_interface(question):
     return answer
 
 iface = gr.Interface(fn=gradio_interface, inputs="text", outputs="text", title="Keyword-based Q&A")
-
 #  import numpy as np
 # import pandas as pd
 # import re
