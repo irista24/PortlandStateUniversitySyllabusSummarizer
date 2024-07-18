@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import AnswerDisplay from './AnswerDisplay';
+import "../Chatbot.css";
 
-const QuestionForm = () => {
+const QuestionForm = ({ setAnswer }) => {
   const [question, setQuestion] = useState('');
-  const [answer, setAnswer] = useState('');
 
   const onQuestionChange = (e) => {
     setQuestion(e.target.value);
@@ -23,7 +23,7 @@ const QuestionForm = () => {
   };
 
   return (
-    <div>
+    <div className="chatbot-container">
       <h2>Ask a Question:</h2>
       <form onSubmit={onSubmit}>
         <input
@@ -31,11 +31,10 @@ const QuestionForm = () => {
           value={question}
           onChange={onQuestionChange}
           placeholder="Enter your question"
+          className="chatbot-input"
         />
-        <button type="submit">Ask</button>
+        <button type="submit" className="chatbot-button">Generate Answer</button>
       </form>
-      <h2>Answer:</h2>
-      {answer && <AnswerDisplay answer={answer} />}
     </div>
   );
 };
@@ -45,7 +44,7 @@ export default QuestionForm;
 // import React, { useState } from 'react';
 // import axios from 'axios';
 // import AnswerDisplay from './AnswerDisplay';
-
+// import "./App.css";
 // const QuestionForm = () => {
 //   const [question, setQuestion] = useState('');
 //   const [answer, setAnswer] = useState('');
@@ -68,7 +67,7 @@ export default QuestionForm;
 
 //   return (
 //     <div>
-//       <h2>Ask a Question</h2>
+//       <h2>Ask a Question:</h2>
 //       <form onSubmit={onSubmit}>
 //         <input
 //           type="text"
@@ -78,7 +77,8 @@ export default QuestionForm;
 //         />
 //         <button type="submit">Ask</button>
 //       </form>
-//       <AnswerDisplay answer={answer} />
+//       <h2>Answer:</h2>
+//       {answer && <AnswerDisplay answer={answer} />}
 //     </div>
 //   );
 // };
