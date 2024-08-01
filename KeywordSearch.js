@@ -1,49 +1,49 @@
-// src/components/KeywordSearch.js
 import React, { useState } from 'react';
 import axios from 'axios';
-import "../Chatbot.css";
 
 const KeywordSearch = () => {
   const [keyword, setKeyword] = useState('');
-  const [summary, setSummary] = useState('');
+  const [summaries, setSummaries] = useState([]);
+  const [error, setError] = useState('');
 
-  const onKeywordChange = (e) => {
-    setKeyword(e.target.value);
-  };
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSearch = async () => {
+    setError(''); // Clear previous errors
     try {
-      const response = await axios.post('http://localhost:5000/summarize_keyword', { keyword });
-      setSummary(response.data.summary);
-    } catch (err) {
-      console.error(err);
-      setSummary('');
+      const response = await axios.post('http://localhost:5000/search_keyword', { keyword });
+
+      if (response.data && Array.isArray(response.data.summaries)) {
+        setSummaries(response.data.summaries);
+      } else {
+        setSummaries([]);
+        setError('No summaries available.');
+      }
+    } catch (error) {
+      console.error('Error searching keyword:', error);
+      setSummaries([]);
+      setError('An error occurred while searching the keyword.');
     }
   };
 
   return (
-    <div className="chatbot-container">
-      <h2>Summarize by Keyword:</h2>
-      <form onSubmit={onSubmit}>
-        <input
-          type="text"
-          value={keyword}
-          onChange={onKeywordChange}
-          placeholder="Enter keyword"
-          className="chatbot-input"
-        />
-        <button type="submit" className="chatbot-button">Summarize</button>
-      </form>
-      <h2>Summary:</h2>
+    <div>
+      <input
+        type="text"
+        value={keyword}
+        onChange={(e) => setKeyword(e.target.value)}
+        placeholder="Enter keyword"
+      />
+      <button onClick={handleSearch}>Search</button>
+      {error && <div style={{ color: 'red' }}>{error}</div>}
       <div>
-        {summary ? (
-          <div className="chatbot-message">
-            <p>{summary}</p>
-          </div>
+        <h3>Summaries:</h3>
+        {summaries.length > 0 ? (
+          <ul>
+            {summaries.map((summary, index) => (
+              <li key={index}>{summary}</li>
+            ))}
+          </ul>
         ) : (
-          <p>No summary available.</p>
+          <p>No summaries found.</p>
         )}
       </div>
     </div>
@@ -52,56 +52,54 @@ const KeywordSearch = () => {
 
 export default KeywordSearch;
 
-// // src/components/KeywordSearch.js
+
+
 // import React, { useState } from 'react';
 // import axios from 'axios';
-// import "../Chatbot.css";
 
 // const KeywordSearch = () => {
 //   const [keyword, setKeyword] = useState('');
 //   const [results, setResults] = useState([]);
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState('');
 
-//   const onKeywordChange = (e) => {
-//     setKeyword(e.target.value);
-//   };
+//   const handleSearch = async () => {
+//     if (!keyword) {
+//       setError('Please enter a keyword.');
+//       return;
+//     }
 
-//   const onSubmit = async (e) => {
-//     e.preventDefault();
-
+//     setLoading(true);
+//     setError('');
 //     try {
-//       const response = await axios.post('http://localhost:5000/search_keyword', { keyword });
+//       const response = await axios.post('http://localhost:5000/search_keyword', {
+//         keyword: keyword,
+//       });
 //       setResults(response.data.instances);
 //     } catch (err) {
-//       console.error(err);
-//       setResults([]);
+//       setError('Error searching for keyword.');
+//     } finally {
+//       setLoading(false);
 //     }
 //   };
 
 //   return (
-//     <div className="chatbot-container">
-//       <h2>Search by Keyword:</h2>
-//       <form onSubmit={onSubmit}>
-//         <input
-//           type="text"
-//           value={keyword}
-//           onChange={onKeywordChange}
-//           placeholder="Enter keyword"
-//           className="chatbot-input"
-//         />
-//         <button type="submit" className="chatbot-button">Search</button>
-//       </form>
-//       <h2>Search Results:</h2>
-//       <div>
-//         {results.length > 0 ? (
-//           results.map((result, index) => (
-//             <div key={index} className="chatbot-message">
-//               <p>{result}</p>
-//             </div>
-//           ))
-//         ) : (
-//           <p></p>
-//         )}
-//       </div>
+//     <div>
+//       <input
+//         type="text"
+//         value={keyword}
+//         onChange={(e) => setKeyword(e.target.value)}
+//         placeholder="Enter keyword"
+//       />
+//       <button onClick={handleSearch} disabled={loading}>
+//         {loading ? 'Searching...' : 'Search Keyword'}
+//       </button>
+//       {error && <p style={{ color: 'red' }}>{error}</p>}
+//       <ul>
+//         {results.map((result, index) => (
+//           <li key={index}>{result}</li>
+//         ))}
+//       </ul>
 //     </div>
 //   );
 // };
