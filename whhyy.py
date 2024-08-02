@@ -299,9 +299,6 @@ def split_text(text, max_length):
         
     return chunks
 
-import logging
-
-logging.basicConfig(level=logging.DEBUG)
 
 @app.route('/search_keyword', methods=['POST'])
 def search_keyword():
@@ -312,7 +309,6 @@ def search_keyword():
         return jsonify({"error": "No keyword provided"}), 400
 
     try:
-        logging.debug(f"Received keyword: {keyword}")
 
         df = pd.read_csv('/u/irist_guest/Desktop/x/cw.csv')
         keyword_lower = keyword.lower()
@@ -324,7 +320,7 @@ def search_keyword():
             if keyword_lower in text.lower():
                 matched_sentences.append(text)
         
-        logging.debug(f"Matched sentences count: {len(matched_sentences)}")
+
 
         if not matched_sentences:
             return jsonify({"summaries": []}), 200
@@ -333,13 +329,20 @@ def search_keyword():
         chunks = split_text(combined_text, 500)
         summaries = [summarizer(chunk, max_length=75, min_length=10, do_sample=False)[0]['summary_text'] for chunk in chunks]
 
-        logging.debug(f"Summaries generated: {summaries}")
-
         return jsonify({"summaries": summaries}), 200
 
     except Exception as e:
-        logging.error(f"Error in /search_keyword: {e}")
         return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/')
+def welcome():
+    return "Welcome to the Syllabus Q&A API!"
+
+if __name__ == '__main__':
+    init_db()
+    init_model()
+    app.run(debug=True)
 
 # @app.route('/search_keyword', methods=['POST'])
 # def search_keyword():
@@ -380,14 +383,6 @@ def search_keyword():
 
 
 
-@app.route('/')
-def welcome():
-    return "Welcome to the Syllabus Q&A API!"
-
-if __name__ == '__main__':
-    init_db()
-    init_model()
-    app.run(debug=True)
 
 
 
