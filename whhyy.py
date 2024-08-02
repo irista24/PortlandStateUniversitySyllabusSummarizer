@@ -12,13 +12,14 @@ from transformers import pipeline
 from sklearn.metrics.pairwise import cosine_similarity
 import traceback
 from sentence_transformers import SentenceTransformer
-
-# Initialize SentenceTransformer model
-embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-# Initialize summarizer
+from transformers import pipeline
 
 app = Flask(__name__)
 CORS(app)
+# Initialize summarizer
+summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6", revision="a4f8f3e")
+embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+
 
 # Initialize tokenizer and model
 tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-uncased")
@@ -27,12 +28,13 @@ model = None
 # Define keywords
 keywords = ['Instructor', 'Email', 'Office', 'Late Work', 'Mentor', 'Course Description', 'Objective', 'Materials', 'Grade', 'Week', 'Location', 'Grading', 'Calendar', 'Expectations', 'Resources', 'Attendance', 'Academic Integrity', 'Peer Mentor', 'Technology']
 
-# Create SQLite database
 def init_db():
     conn = sqlite3.connect('syllabi.db')
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS syllabi
                  (id INTEGER PRIMARY KEY, syllabus_id INTEGER, keyword TEXT, sentence TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS summaries
+                 (id INTEGER PRIMARY KEY, keyword TEXT, summary TEXT)''')
     conn.commit()
     conn.close()
 
@@ -69,6 +71,36 @@ def extract_text_from_pdf(file):
     except Exception as e:
         return f"Error extracting text from PDF: {e}"
 
+def check_similarity(new_summary, keyword):
+    """
+    Check if a new summary is similar to any existing summaries for the given keyword.
+    """
+    conn = sqlite3.connect('syllabi.db')
+    c = conn.cursor()
+    c.execute("SELECT summary FROM summaries WHERE keyword = ?", (keyword,))
+    existing_summaries = [row[0] for row in c.fetchall()]
+    conn.close()
+
+    if not existing_summaries:
+        return False
+
+    # Compute similarity using SentenceTransformer embeddings
+    embeddings = embedding_model.encode([new_summary] + existing_summaries)
+    similarity_matrix = cosine_similarity([embeddings[0]], embeddings[1:])
+    max_similarity = similarity_matrix.max()
+
+    return max_similarity > 0.8  # Similarity threshold
+
+def store_summary(keyword, summary):
+    """
+    Store the summary in the database if it's not similar to existing ones.
+    """
+    if not check_similarity(summary, keyword):
+        conn = sqlite3.connect('syllabi.db')
+        c = conn.cursor()
+        c.execute("INSERT INTO summaries (keyword, summary) VALUES (?, ?)", (keyword, summary))
+        conn.commit()
+        conn.close()
 
 
 
@@ -245,15 +277,6 @@ def summarize_entire_syllabus():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-from transformers import pipeline
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
-import pandas as pd
-import traceback
-from flask import Flask, request, jsonify
-
-# Initialize models
-summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6", revision="a4f8f3e")
 
 def split_text(text, max_length):
     """Split text into chunks of max_length tokens."""
@@ -275,6 +298,11 @@ def split_text(text, max_length):
         chunks.append(" ".join(current_chunk))
         
     return chunks
+
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
 @app.route('/search_keyword', methods=['POST'])
 def search_keyword():
     data = request.json
@@ -284,6 +312,8 @@ def search_keyword():
         return jsonify({"error": "No keyword provided"}), 400
 
     try:
+        logging.debug(f"Received keyword: {keyword}")
+
         df = pd.read_csv('/u/irist_guest/Desktop/x/cw.csv')
         keyword_lower = keyword.lower()
         
@@ -294,19 +324,71 @@ def search_keyword():
             if keyword_lower in text.lower():
                 matched_sentences.append(text)
         
+        logging.debug(f"Matched sentences count: {len(matched_sentences)}")
+
         if not matched_sentences:
             return jsonify({"summaries": []}), 200
 
         combined_text = ' '.join(matched_sentences)
         chunks = split_text(combined_text, 500)
-        summaries = [summarizer(chunk, max_length=150, min_length=30, do_sample=False)[0]['summary_text'] for chunk in chunks]
+        summaries = [summarizer(chunk, max_length=75, min_length=10, do_sample=False)[0]['summary_text'] for chunk in chunks]
+
+        logging.debug(f"Summaries generated: {summaries}")
 
         return jsonify({"summaries": summaries}), 200
 
     except Exception as e:
-        print(f"Error in /search_keyword: {e}")
-        print(traceback.format_exc())
+        logging.error(f"Error in /search_keyword: {e}")
         return jsonify({"error": str(e)}), 500
+
+# @app.route('/search_keyword', methods=['POST'])
+# def search_keyword():
+#     data = request.json
+#     keyword = data.get('keyword')
+
+#     if not keyword:
+#         return jsonify({"error": "No keyword provided"}), 400
+
+#     try:
+#         df = pd.read_csv('/u/irist_guest/Desktop/x/cw.csv')
+#         keyword_lower = keyword.lower()
+        
+#         matched_sentences = []
+
+#         for index, row in df.iterrows():
+#             text = row['Text']
+#             if keyword_lower in text.lower():
+#                 matched_sentences.append(text)
+        
+#         if not matched_sentences:
+#             return jsonify({"summaries": []}), 200
+
+#         combined_text = ' '.join(matched_sentences)
+#         chunks = split_text(combined_text, 500)
+#         summaries = [summarizer(chunk, max_length=75, min_length=10, do_sample=False)[0]['summary_text'] for chunk in chunks]
+
+#         # Store summaries in the database
+#         for summary in summaries:
+#             store_summary(keyword, summary)
+
+#         return jsonify({"summaries": summaries}), 200
+
+#     except Exception as e:
+#         print(f"Error in /search_keyword: {e}")
+#         print(traceback.format_exc())
+#         return jsonify({"error": str(e)}), 500
+
+
+
+@app.route('/')
+def welcome():
+    return "Welcome to the Syllabus Q&A API!"
+
+if __name__ == '__main__':
+    init_db()
+    init_model()
+    app.run(debug=True)
+
 
 
 # @app.route('/search_keyword', methods=['POST'])
@@ -354,13 +436,3 @@ def search_keyword():
 #     except Exception as e:
 #         print(f"Error in /search_keyword: {e}")
 #         print(traceback.format_exc())
-
-
-@app.route('/')
-def welcome():
-    return "Welcome to the Syllabus Q&A API!"
-
-if __name__ == '__main__':
-    init_db()
-    init_model()
-    app.run(debug=True)
