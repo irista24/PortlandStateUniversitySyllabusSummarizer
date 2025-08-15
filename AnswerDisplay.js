@@ -11,16 +11,3 @@ const AnswerDisplay = ({ answer }) => {
 };
 
 export default AnswerDisplay;
-
-// import React from 'react';
-// import "./App.css";
-// const AnswerDisplay = ({ answer }) => {
-//   return (
-//     <div>
-//       <h2></h2>
-//       <p>{answer}</p>
-//     </div>
-//   );
-// };
-
-// export default AnswerDisplay;
