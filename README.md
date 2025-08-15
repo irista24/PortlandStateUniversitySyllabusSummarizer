@@ -2,7 +2,7 @@ Hi everyone! This was my first attempt at creating a machine learning model that
 
 Libraries I used consist of Transformers, Pytorch, Pandas, Scikit-Learn, Tqdm, MatPlotlib and Gradio. 
 
-Languages I are Python for building the model and Javascript, CSS, and HTML for the frontend. 
+Languages I are Python for building the model and Javascript and CSS for the frontend. 
 
 This model is capable of summarize PSU syllabi that are uploaded by students. I created everything from the frontend to the backend. This experience was definitely a learning experience and am forever indebted to Professor Teuscher for his immense support and knowledge that he bestowed on me. 
 
